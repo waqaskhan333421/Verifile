@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="PDF Access Management System">
+    <title>
+        {% if page == 'login' %}Login{% elif page == 'register' %}Register{% else %}Dashboard{% endif %} — PDF Access
+        Manager
+    </title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+    {% if page == 'login' %}
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="logo">
+                <h1>📄 PDF Access Manager</h1>
+                <p>Sign in to your account</p>
+            </div>
+            <form id="login-form" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" placeholder="Enter your email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="Enter your password" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Sign In</button>
+            </form>
+            <div class="switch-link">
+                Don't have an account? <a href="/register">Register here</a>
+            </div>
+        </div>
+    </div>
+
+    {% elif page == 'register' %}
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="logo">
+                <h1>📄 PDF Access Manager</h1>
+                <p>Create a new account</p>
+            </div>
+            <form id="register-form" onsubmit="handleRegister(event)">
+                <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" placeholder="Enter your full name" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" placeholder="Enter your email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" minlength="6" placeholder="Create a password" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirm_password">Confirm Password</label>
+                    <input type="password" id="confirm_password" minlength="6" placeholder="Confirm your password"
+                        required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Register</button>
+            </form>
+            <div class="switch-link">
+                Already have an account? <a href="/login">Sign in here</a>
+            </div>
+        </div>
+    </div>
+
+    {% elif page == 'admin_dashboard' or page == 'admin_requests' or page == 'admin_users' or page == 'admin_pdfs' %}
+    <div class="dashboard">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <span class="brand">📄 PDF Access Manager</span>
+            <div class="nav-actions-group">
+                <div class="nav-links">
+                    <a href="/admin-dashboard" class="nav-btn {% if page == 'admin_dashboard' %}active{% endif %}">📤 Upload</a>
+                    <a href="/admin-requests" class="nav-btn {% if page == 'admin_requests' %}active{% endif %}">📋 User Requests</a>
+                    <a href="/admin-users" class="nav-btn {% if page == 'admin_users' %}active{% endif %}">👥 User Accounts</a>
+                    <a href="/admin-pdfs" class="nav-btn {% if page == 'admin_pdfs' %}active{% endif %}">📁 Uploaded PDFs</a>
+                </div>
+                <div class="menu-controls">
+                    <button class="icon-btn" onclick="openPasswordModal()" title="Settings">⚙️</button>
+                    <div class="menu-container">
+                        <div class="hamburger-menu" onclick="toggleMenu()">
+                            <span></span><span></span><span></span>
+                        </div>
+                        <div id="dropdown-menu" class="dropdown-content">
+                            <div class="menu-header">Preferences</div>
+                            <div class="theme-option" onclick="setTheme('light')">⚪ Light Mode</div>
+                            <div class="theme-option" onclick="setTheme('dark')">⚫ Dark Mode</div>
+                            <hr style="border:none; border-top: 1px solid var(--border-glass); margin: 0;">
+                            <div class="menu-item logout" onclick="handleLogout()" style="color: var(--accent-danger);">🚪 Logout</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            {% if page == 'admin_dashboard' %}
+            <div class="page-header">
+                <h2>Upload PDF Documents</h2>
+                <p>Upload new PDF files for users to request access to</p>
+            </div>
+            <div class="upload-area">
+                <h3>📤 Upload New PDF</h3>
+                <form class="upload-form" onsubmit="handleUploadPDF(event)">
+                    <div class="form-group">
+                        <label for="title">Title</label>
+                        <input type="text" id="title" name="title" placeholder="Enter PDF title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="file">PDF File</label>
+                        <div class="file-input-wrapper">
+                            <input type="file" id="file" name="file" accept=".pdf" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea id="description" name="description" placeholder="Describe the PDF content..."
+                            rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">📤 Upload PDF</button>
+                </form>
+            </div>
+            <div class="page-header">
+                <h2>Recent Uploads</h2>
+            </div>
+            <div class="card-grid" id="pdfs-list">
+                <div class="loading" style="padding: 40px; text-align: center; color: var(--text-muted);">Loading...
+                </div>
+            </div>
+            {% elif page == 'admin_requests' %}
+            <div class="page-header">
+                <h2>User Requests</h2>
+                <p>Review and decide on pending PDF access applications</p>
+            </div>
+            <div id="applications-list">
+                <div class="loading" style="padding: 40px; text-align: center; color: var(--text-muted);">Loading
+                    requests...</div>
+            </div>
+            {% elif page == 'admin_users' %}
+            <div class="page-header">
+                <h2>User Accounts</h2>
+                <p>Manage registered users</p>
+            </div>
+            <div class="users-table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Joined</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-tbody">
+                        <tr>
+                            <td colspan="5" class="loading" style="text-align: center; padding: 20px;">Loading users...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            {% elif page == 'admin_pdfs' %}
+            <div class="page-header">
+                <h2>Manage Uploaded PDFs</h2>
+                <p>Review and delete stored PDF files</p>
+            </div>
+            <div class="users-table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Description</th>
+                            <th>Upload Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pdfs-table-body">
+                        <tr>
+                            <td colspan="4" class="loading" style="text-align: center; padding: 20px;">Loading PDFs...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% elif page == 'user_dashboard' %}
+    <div class="dashboard">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <span class="brand">📄 PDF Access Manager</span>
+            <div class="nav-actions-group">
+                <div class="nav-links">
+                    <button class="nav-btn active" onclick="showSection('pdfs')">📄 Available PDFs</button>
+                    <button class="nav-btn" onclick="showSection('applications')">📋 My Applications</button>
+                </div>
+                <div class="menu-controls">
+                    <button class="icon-btn" onclick="openPasswordModal()" title="Settings">⚙️</button>
+                    <div class="menu-container">
+                        <div class="hamburger-menu" onclick="toggleMenu()">
+                            <span></span><span></span><span></span>
+                        </div>
+                        <div id="dropdown-menu" class="dropdown-content">
+                            <div class="menu-header">Preferences</div>
+                            <div class="theme-option" onclick="setTheme('light')">⚪ Light Mode</div>
+                            <div class="theme-option" onclick="setTheme('dark')">⚫ Dark Mode</div>
+                            <hr style="border:none; border-top: 1px solid var(--border-glass); margin: 0;">
+                            <div class="menu-item logout" onclick="handleLogout()" style="color: var(--accent-danger);">🚪 Logout</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- PDFs Section -->
+            <div id="section-pdfs">
+                <div class="page-header">
+                    <h2>Available PDFs</h2>
+                    <p>Browse documents and request access to the ones you need</p>
+                </div>
+                <div class="card-grid" id="user-pdfs-list">
+                    <div class="loading" style="padding: 40px; text-align: center; color: var(--text-muted);">Loading
+                        PDFs...</div>
+                </div>
+            </div>
+
+            <!-- Applications Section -->
+            <div id="section-applications" style="display: none;">
+                <div class="page-header">
+                    <h2>My Applications</h2>
+                    <p>Track the status of your access requests</p>
+                </div>
+                <div id="my-applications-list">
+                    <div class="loading" style="padding: 40px; text-align: center; color: var(--text-muted);">Loading
+                        applications...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Apply Modal -->
+    <div class="modal-overlay" id="apply-modal">
+        <div class="modal">
+            <h3>📝 Request Access</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                Requesting access to: <strong id="apply-pdf-title" style="color: var(--text-primary);"></strong>
+            </p>
+            <form onsubmit="handleSubmitApplication(event)">
+                <input type="hidden" id="apply-pdf-id">
+                <div class="form-group">
+                    <label for="apply-text">Why do you need this document?</label>
+                    <textarea id="apply-text" rows="5" placeholder="Explain your reason for requesting access..."
+                        required></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-danger btn-sm" onclick="closeApplyModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm">Submit Application</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Viewer Modal -->
+    <div class="modal-overlay" id="viewer-modal">
+        <div class="modal">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 id="viewer-pdf-title" style="margin-bottom: 0;">👁️ Viewing PDF</h3>
+                <button class="btn btn-danger btn-sm" onclick="closeViewerModal()">Close Viewer</button>
+            </div>
+            <div class="viewer-container">
+                <iframe id="pdf-viewer-iframe" src=""></iframe>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if page != 'login' and page != 'register' %}
+    <!-- Common Settings Modal (Password) -->
+    <div class="modal-overlay" id="password-modal">
+        <div class="modal">
+            <h3>⚙️ Change Password</h3>
+            <form onsubmit="handlePasswordChange(event)">
+                <div class="form-group">
+                    <label for="old-password">Current Password</label>
+                    <input type="password" id="old-password" required>
+                </div>
+                <div class="form-group">
+                    <label for="new-password">New Password</label>
+                    <input type="password" id="new-password" minlength="6" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirm-new-password">Confirm New Password</label>
+                    <input type="password" id="confirm-new-password" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-danger btn-sm" onclick="closePasswordModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm">Update Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    <script src="/static/app.js"></script>
+    <script>
+        const currentPage = "{{ page }}";
+
+        if (currentPage === 'admin_dashboard') {
+            loadAdminPDFs();
+        } else if (currentPage === 'admin_requests') {
+            loadApplications();
+        } else if (currentPage === 'admin_users') {
+            loadUsers();
+        } else if (currentPage === 'admin_pdfs') {
+            loadAdminPDFsList();
+        } else if (currentPage === 'user_dashboard') {
+            loadUserPDFs();
+            loadMyApplications();
+        }
+
+        // Function used by user dashboard
+        function showSection(section) {
+            document.getElementById('section-pdfs').style.display = section === 'pdfs' ? 'block' : 'none';
+            document.getElementById('section-applications').style.display = section === 'applications' ? 'block' : 'none';
+
+            document.querySelectorAll('.nav-links .nav-btn:not(.logout)').forEach((btn, i) => {
+                if (i === 0) btn.classList.toggle('active', section === 'pdfs');
+                if (i === 1) btn.classList.toggle('active', section === 'applications');
+            });
+
+            if (section === 'applications') loadMyApplications();
+        }
+    </script>
+</body>
+
+</html>
